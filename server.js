@@ -1,0 +1,38 @@
+const path = require("path");
+const http = require("http");
+const express = require("express");
+const { Server } = require("socket.io");
+
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server);
+const PORT = process.env.PORT || 3000;
+
+app.use(express.static(path.join(__dirname)));
+
+io.on("connection", (socket) => {
+  socket.on("chat message", (payload) => {
+    if (!payload || typeof payload.text !== "string") {
+      return;
+    }
+
+    const text = payload.text.trim().slice(0, 500);
+    if (!text) {
+      return;
+    }
+
+    const rawName = typeof payload.name === "string" ? payload.name : "Guest";
+    const name = rawName.trim().slice(0, 24) || "Guest";
+
+    io.emit("chat message", {
+      senderId: socket.id,
+      name,
+      text,
+      at: new Date().toISOString()
+    });
+  });
+});
+
+server.listen(PORT, () => {
+  console.log(`Chat server listening on port ${PORT}`);
+});

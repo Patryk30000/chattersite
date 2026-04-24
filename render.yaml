@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: render-html-chat
+    runtime: node
+    buildCommand: npm install
+    startCommand: npm start
