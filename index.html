@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Render Chat</title>
+  <style>
+    :root {
+      --bg-top: #021923;
+      --bg-bottom: #0f2630;
+      --panel: #123040cc;
+      --panel-border: #ffffff2f;
+      --text: #e8f2f8;
+      --muted: #9ab2c0;
+      --accent: #2ed3b7;
+      --accent-strong: #1fb89f;
+      --self-bubble: #19547a;
+      --peer-bubble: #1f3d4f;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 20px;
+      display: grid;
+      place-items: center;
+      color: var(--text);
+      font-family: "Space Grotesk", "Segoe UI", "Trebuchet MS", sans-serif;
+      background:
+        radial-gradient(1200px 700px at 10% 0%, #14635f 0%, transparent 45%),
+        radial-gradient(1000px 800px at 95% 100%, #0f4c72 0%, transparent 42%),
+        linear-gradient(165deg, var(--bg-top), var(--bg-bottom));
+    }
+
+    .chat-shell {
+      width: min(100%, 980px);
+      height: min(90vh, 760px);
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      border: 1px solid var(--panel-border);
+      border-radius: 20px;
+      overflow: hidden;
+      backdrop-filter: blur(14px);
+      background: linear-gradient(160deg, #17394bcc, var(--panel));
+      box-shadow: 0 22px 60px #00000050;
+      animation: slide-in 360ms ease-out;
+    }
+
+    header {
+      padding: 16px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid var(--panel-border);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.25rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .subtitle {
+      margin: 4px 0 0;
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+
+    .status {
+      border: 1px solid #ffffff35;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 0.82rem;
+      background: #0f2837;
+      color: #facc15;
+      white-space: nowrap;
+      transition: color 140ms ease;
+    }
+
+    .status.online {
+      color: var(--accent);
+    }
+
+    #messages {
+      margin: 0;
+      padding: 16px 18px;
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      overflow-y: auto;
+      background: linear-gradient(180deg, #0f2533aa, #132f3faa);
+      scrollbar-gutter: stable;
+    }
+
+    .message {
+      max-width: min(82%, 640px);
+      display: grid;
+      gap: 5px;
+      align-self: flex-start;
+      animation: fade-up 180ms ease-out;
+    }
+
+    .message.self {
+      align-self: flex-end;
+    }
+
+    .meta {
+      font-size: 0.75rem;
+      color: var(--muted);
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .bubble {
+      padding: 10px 12px;
+      border-radius: 12px 12px 12px 4px;
+      border: 1px solid #ffffff2a;
+      background: var(--peer-bubble);
+      line-height: 1.35;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .message.self .bubble {
+      background: var(--self-bubble);
+      border-radius: 12px 12px 4px 12px;
+    }
+
+    #chat-form {
+      display: grid;
+      grid-template-columns: 160px 1fr auto;
+      gap: 10px;
+      padding: 14px 18px 16px;
+      border-top: 1px solid var(--panel-border);
+      background: #0f2634dd;
+    }
+
+    input,
+    button {
+      border-radius: 10px;
+      border: 1px solid #ffffff3b;
+      padding: 10px 12px;
+      font: inherit;
+    }
+
+    input {
+      color: var(--text);
+      background: #0a1d28;
+      outline: none;
+      transition: border-color 120ms ease, box-shadow 120ms ease;
+    }
+
+    input:focus {
+      border-color: #44e5cc;
+      box-shadow: 0 0 0 3px #2ed3b733;
+    }
+
+    button {
+      background: linear-gradient(140deg, var(--accent), var(--accent-strong));
+      border-color: #ffffff57;
+      color: #082229;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 120ms ease, filter 120ms ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.04);
+    }
+
+    @media (max-width: 720px) {
+      body {
+        padding: 10px;
+      }
+
+      .chat-shell {
+        height: 92vh;
+      }
+
+      #chat-form {
+        grid-template-columns: 1fr;
+      }
+
+      .message {
+        max-width: 92%;
+      }
+    }
+
+    @keyframes slide-in {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fade-up {
+      from {
+        opacity: 0;
+        transform: translateY(5px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="chat-shell">
+    <header>
+      <div>
+        <h1>Render Chat</h1>
+        <p class="subtitle">Realtime chat powered by Socket.IO and deployable on Render.</p>
+      </div>
+      <div class="status" id="status">Connecting...</div>
+    </header>
+
+    <ul id="messages" aria-live="polite"></ul>
+
+    <form id="chat-form" autocomplete="off">
+      <input id="name" name="name" maxlength="24" placeholder="Your name" value="Guest">
+      <input id="message" name="message" maxlength="500" placeholder="Write a message..." required>
+      <button type="submit">Send</button>
+    </form>
+  </main>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    (() => {
+      const socket = io({
+        transports: ["websocket"],
+        reconnection: true,
+        reconnectionAttempts: Infinity,
+        reconnectionDelay: 800,
+        reconnectionDelayMax: 5000,
+        timeout: 20000
+      });
+      const form = document.getElementById("chat-form");
+      const messagesEl = document.getElementById("messages");
+      const messageInput = document.getElementById("message");
+      const nameInput = document.getElementById("name");
+      const statusEl = document.getElementById("status");
+      let socketId = "";
+
+      function setStatus(text, online) {
+        statusEl.textContent = text;
+        statusEl.classList.toggle("online", Boolean(online));
+      }
+
+      function formatTime(isoTime) {
+        return new Date(isoTime).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit"
+        });
+      }
+
+      function addMessage({ name, text, at, senderId }) {
+        const item = document.createElement("li");
+        item.className = "message";
+        const mine = senderId && senderId === socketId;
+        if (mine) {
+          item.classList.add("self");
+        }
+
+        const meta = document.createElement("div");
+        meta.className = "meta";
+
+        const author = document.createElement("span");
+        author.textContent = mine ? "You" : name || "Guest";
+
+        const time = document.createElement("span");
+        time.textContent = at ? formatTime(at) : "";
+
+        const bubble = document.createElement("div");
+        bubble.className = "bubble";
+        bubble.textContent = text;
+
+        meta.append(author, time);
+        item.append(meta, bubble);
+        messagesEl.appendChild(item);
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+      }
+
+      socket.on("connect", () => {
+        socketId = socket.id;
+        setStatus("Connected", true);
+      });
+
+      socket.on("disconnect", (reason) => {
+        setStatus(`Disconnected (${reason})`, false);
+      });
+
+      socket.io.on("reconnect_attempt", () => {
+        setStatus("Reconnecting...", false);
+      });
+
+      socket.on("connect_error", (error) => {
+        const detail = error && error.message ? error.message : "unknown";
+        setStatus(`Connection error: ${detail}`, false);
+      });
+
+      socket.on("chat message", addMessage);
+
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const text = messageInput.value.trim();
+        if (!text) {
+          return;
+        }
+
+        socket.emit("chat message", {
+          name: nameInput.value.trim() || "Guest",
+          text
+        });
+
+        messageInput.value = "";
+        messageInput.focus();
+      });
+
+      addMessage({
+        name: "System",
+        text: "Welcome. Open this chat from another browser tab or device to test realtime messaging.",
+        at: new Date().toISOString()
+      });
+    })();
+  </script>
+</body>
+</html>
