@@ -10,20 +10,23 @@ const io = new Server(server, {
   pingInterval: 25000,
   pingTimeout: 60000
 });
+
 const PORT = process.env.PORT || 3000;
 
 app.use(express.static(path.join(__dirname)));
 
+// ✅ ADD THIS
+app.get("/.well-known/discord", (req, res) => {
+  res.type("text/plain");
+  res.send("dh=9ce1c318ee5f6678ac1731ff464fe246fdc66c00");
+});
+
 io.on("connection", (socket) => {
   socket.on("chat message", (payload) => {
-    if (!payload || typeof payload.text !== "string") {
-      return;
-    }
+    if (!payload || typeof payload.text !== "string") return;
 
     const text = payload.text.trim().slice(0, 500);
-    if (!text) {
-      return;
-    }
+    if (!text) return;
 
     const rawName = typeof payload.name === "string" ? payload.name : "Guest";
     const name = rawName.trim().slice(0, 24) || "Guest";
